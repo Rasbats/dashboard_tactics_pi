@@ -1,220 +1,124 @@
-##---------------------------------------------------------------------------
-## Author:      Dave Register
-## ***************************************************************************
-## *   Copyright (C) 2010 by David S. Register                               *
-## *   This program is free software; you can redistribute it and/or modify  *
-## *   it under the terms of the GNU General Public License as published by  *
-## *   the Free Software Foundation; either version 2 of the License, or     *
-## *   (at your option) any later version.                                   *
-## *                                                                         *
-## *   This program is distributed in the hope that it will be useful,       *
-## *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
-## *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
-## *   GNU General Public License for more details.                          *
-## *                                                                         *
-## *   You should have received a copy of the GNU General Public License     *
-## *   along with this program; if not, write to the                         *
-## *   Free Software Foundation, Inc.,                                       *
-## *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,  USA.         *
-## ***************************************************************************
+# ~~~
+# Summary:      Main plugin build script
+# Copyright (c) 2020-2021 Mike Rossiter
+# License:      GPLv3+
+# ~~~
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+
+# -------- Cmake setup ---------
+#
+cmake_minimum_required(VERSION 3.12.0)
+include(${CMAKE_SOURCE_DIR}/cmake/CmakeSetup.cmake NO_POLICY_SCOPE)
+message(STATUS "Cmake version: ${CMAKE_VERSION}.")
 
 
-# define minimum cmake version and backward compatibility policy
-# Set as per Ubuntu 18.04.4LTS as reference
-CMAKE_MINIMUM_REQUIRED(VERSION 3.10.1)
-# Ignore COMPILE_DEFINITIONS_<Config> properties:
-CMAKE_POLICY(SET CMP0043 NEW)
+# -------- Build setup  --------
+#
+include(PluginOptions)
+if (BUILD_TYPE)
+  message(STATUS "Building: ${BUILD_TYPE}")
+else ()
+  message(STATUS "Configuring")
+endif ()
 
-PROJECT(dashboard_tactics_pi)
-SET(PACKAGE_NAME dashboard_tactics_pi)
-SET(VERBOSE_NAME DashT)
-SET(TITLE_NAME DashT)
-SET(CPACK_PACKAGE_CONTACT "petri38-github@yahoo.com")
+# -------- Plugin setup ----------
+#
+include(Plugin.cmake)
 
-INCLUDE(CTest)
+# -------- Setup completed, build the plugin --------
+#
+project(${PKG_NAME} VERSION ${PKG_VERSION})
+include(PluginCompiler)
 
-INCLUDE("cmake/PluginConfigure.cmake")
+add_library(${CMAKE_PROJECT_NAME} SHARED EXCLUDE_FROM_ALL ${SRC})
+include_directories(BEFORE ${CMAKE_BINARY_DIR}/include)
 
-SET(SRC_DASHT
-    src/dashboard_pi.h
-    src/DashboardConfig.cpp
-    src/DashboardFunctions.h
-    src/DashboardFunctions.cpp
-    src/DashboardWindow.h
-    src/DashboardWindowContainer.h
-    src/DashboardWindow.h
-    src/DashboardWindow.cpp
-    src/AddInstrumentDlg.h
-    src/AddInstrumentDlg.cpp
-    src/DashboardInstrumentContainer.h
-    src/DashboardInstrumentContainer.cpp
-    src/DashboardPreferencesDialog.h
-    src/DashboardPreferencesDialog.cpp
-    src/dashboard_pi.cpp
-    src/instrument.cpp
-    src/instrument.h
-    src/iirfilter.h
-    src/iirfilter.cpp
-    src/compass.cpp
-    src/compass.h
-    src/dial.cpp
-    src/dial.h
-    src/gps.cpp
-    src/gps.h
-    src/rudder_angle.cpp
-    src/rudder_angle.h
-    src/speedometer.cpp
-    src/speedometer.h
-    src/wind.cpp
-    src/wind.h
-    src/depth.cpp
-    src/depth.h
-    src/clock.cpp
-    src/clock.h
-    src/icons.cpp
-    src/icons.h
-    src/wind_history.cpp
-    src/wind_history.h
-    src/baro_history.cpp
-    src/baro_history.h
-    src/Odograph.h
-    src/Odograph.cpp
-    src/from_ownship.cpp
-    src/from_ownship.h
-    src/wxJSON/jsonval.cpp
-    src/wxJSON/jsonreader.cpp
-    src/wxJSON/json_defs.h
-    src/wxJSON/jsonreader.h
-    src/wxJSON/jsonval.h
-    src/wxJSON/jsonwriter.h
-    src/tactics_pi.h
-    src/tactics_pi.cpp
-    src/TacticsConfig.cpp
-    src/TacticsWindow.h
-    src/TacticsWindow.cpp
-    src/TacticsPreferencesDialog.h
-    src/TacticsPreferencesDialog.cpp
-    src/TacticsEnums.h
-    src/TacticsStructs.h
-    src/TacticsFunctions.h
-    src/TacticsFunctions.cpp
-    src/ExpSmooth.h
-    src/ExpSmooth.cpp
-    src/DoubleExpSmooth.h
-    src/DoubleExpSmooth.cpp
-    src/Polar.h
-    src/Polar.cpp
-    src/PerformanceSingle.h
-    src/PerformanceSingle.cpp
-    src/PolarPerformance.h
-    src/PolarPerformance.cpp
-    src/StreamInSkSingle.h
-    src/StreamInSkSingle.cpp
-    src/wxJSON/jsonwriter.cpp
-    src/StreamoutSchema.h
-    src/LineProtocol.h
-    src/StreamoutSingle.h
-    src/StreamoutSingle.cpp
-    src/plugin_ids.h
-    src/bearingcompass.h
-    src/bearingcompass.cpp
-    src/polarcompass.h
-    src/polarcompass.cpp
-    src/avg_wind.h
-    src/avg_wind.cpp
-    src/EngineDJG.h
-    src/EngineDJG.cpp
-    src/InstruJS.h
-    src/InstruJS.cpp
-    src/TimesTUI.h
-    src/TimesTUI.cpp
-    src/RaceStart.h
-    src/RaceStart.cpp 
-    src/RaceStartGL.cpp
-    src/RaceMark.h
-    src/RaceMark.cpp 
-    src/RaceMarkGL.cpp
-    src/SkData.h
-    src/SkData.cpp
+add_subdirectory("opencpn-libs/${PKG_API_LIB}")
+target_link_libraries(${CMAKE_PROJECT_NAME} ocpn::api)
+
+set(VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(VERSION_PATCH ${PROJECT_VERSION_PATCH})
+if (PROJECT_VERSION_TWEAK STREQUAL "")
+  set(PROJECT_VERSION_TWEAK 0)
+endif ()
+
+
+set(PACKAGE_NAME ${CMAKE_PROJECT_NAME})
+
+# Create the minimim ocpn version id string like ov50
+string(REGEX REPLACE "\([0-9]\)\.\([0-9]\).*" "ov\\1\\2"
+       OCPN_MIN_VERSION ${API_OCPN_MIN_VERSION})
+
+if (COMMAND late_init)
+  late_init()
+endif ()
+
+# Configure the flatpak manifest
+file(
+  GLOB manifest ${PROJECT_SOURCE_DIR}/flatpak/org.opencpn.OpenCPN.Plugin.*.yaml
+)
+include(ConfigureManifest)
+configure_manifest(${manifest} _new_manifest)
+
+# Set up targets. Targets sets up new targets with BUILD_TYPE set to
+# 'flatpak', 'android' or 'tarball'. The initial call without BUILD_TYPE ends
+# here.
+#
+include(Targets)
+create_targets(${_new_manifest})
+
+if ("${BUILD_TYPE}" STREQUAL "")
+  return ()
+endif ()
+
+ 
+if (NOT ${BUILD_TYPE} STREQUAL "flatpak")
+  # Build package as required (flatpak already dealt with).
+  #
+  if (APPLE)
+    include(MacosWxwidgets)
+  endif ()
+  include(PluginInstall)
+  if (QT_ANDROID)
+    include(AndroidLibs)
+  else ()
+    include(PluginLibs)
+  endif ()
+  include(PluginLocalization)
+
+  include_directories(BEFORE ${CMAKE_BINARY_DIR}/include)
+ 
+  if (COMMAND add_plugin_libraries)
+    add_plugin_libraries()
+  endif ()
+
+endif ()
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_BINARY_DIR}/include/config.h
+  @ONLY
 )
 
-SET(SRC_NMEA0183
-    src/nmea0183/LatLong.hpp
-    src/nmea0183/latlong.cpp
-    src/nmea0183/long.cpp
-    src/nmea0183/nmea0183.cpp
-    src/nmea0183/nmea0183.hpp
-    src/nmea0183/Response.hpp
-    src/nmea0183/response.cpp
-    src/nmea0183/RMB.hpp
-    src/nmea0183/rmb.cpp
-    src/nmea0183/Sentence.hpp
-    src/nmea0183/sentence.cpp
-    src/nmea0183/talkerid.cpp
-    src/nmea0183/RMC.HPP
-    src/nmea0183/rmc.cpp
-    src/nmea0183/hexvalue.cpp
-    src/nmea0183/lat.cpp
-    src/nmea0183/expid.cpp
-    src/nmea0183/wpl.hpp
-    src/nmea0183/wpl.cpp
-    src/nmea0183/rte.hpp
-    src/nmea0183/rte.cpp
-    src/nmea0183/hdt.hpp
-    src/nmea0183/hdt.cpp
-    src/nmea0183/hdg.hpp
-    src/nmea0183/hdg.cpp
-    src/nmea0183/hdm.hpp
-    src/nmea0183/hdm.cpp
-    src/nmea0183/gll.hpp
-    src/nmea0183/gll.cpp
-    src/nmea0183/vtg.hpp
-    src/nmea0183/vtg.cpp
-    src/nmea0183/gga.hpp
-    src/nmea0183/gga.cpp
-    src/nmea0183/gsv.hpp
-    src/nmea0183/gsv.cpp
-    src/nmea0183/dbt.cpp
-    src/nmea0183/dbt.hpp
-    src/nmea0183/dpt.cpp
-    src/nmea0183/dpt.hpp
-    src/nmea0183/mtw.cpp
-    src/nmea0183/mtw.hpp
-    src/nmea0183/mwv.cpp
-    src/nmea0183/mwv.hpp
-    src/nmea0183/vhw.hpp
-    src/nmea0183/vhw.cpp
-    src/nmea0183/vwr.cpp
-    src/nmea0183/vwr.hpp
-    src/nmea0183/xte.cpp
-    src/nmea0183/xte.hpp
-    src/nmea0183/zda.cpp
-    src/nmea0183/zda.hpp
-    src/nmea0183/rsa.hpp
-    src/nmea0183/rsa.cpp
-    src/nmea0183/SatInfo.h
-    src/nmea0183/mwd.cpp
-    src/nmea0183/mwd.hpp
-    src/nmea0183/vwt.cpp
-    src/nmea0183/vwt.hpp
-    src/nmea0183/mta.cpp
-    src/nmea0183/mta.hpp
-    src/nmea0183/vlw.cpp
-    src/nmea0183/vlw.hpp
-    src/nmea0183/mda.cpp
-    src/nmea0183/mda.hpp
-    src/nmea0183/xdr.cpp
-    src/nmea0183/xdr.hpp
+configure_file(
+  # The cloudsmith upload script
+  ${CMAKE_SOURCE_DIR}/ci/upload.sh.in ${CMAKE_BINARY_DIR}/upload.sh
+  @ONLY
+)
+configure_file(
+  # The cloudsmith upload script, windows bat file.
+  ${CMAKE_SOURCE_DIR}/ci/upload.bat.in ${CMAKE_BINARY_DIR}/upload.bat
+  @ONLY
 )
 
-# include_directories(BEFORE ${PROJECT_SOURCE_DIR}/libs/ocpn-api)
-INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/libs/ocpn-api)
-  
-SET(SRC ${SRC_DASHT} ${SRC_NMEA0183})
-ADD_LIBRARY(${PACKAGE_NAME} SHARED ${SRC} )
-
-INCLUDE("cmake/PluginInstall.cmake")
-INCLUDE("cmake/PluginLocalization.cmake")
-INCLUDE("cmake/PluginPackage.cmake")
-
-ADD_SUBDIRECTORY("tests")
+set(checksum "@checksum@")
+configure_file(
+  # The XML metadata file
+  ${CMAKE_SOURCE_DIR}/plugin.xml.in
+  ${CMAKE_BINARY_DIR}/${pkg_displayname}.xml.in
+  @ONLY
+)
